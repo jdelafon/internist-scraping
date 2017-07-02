@@ -9,8 +9,6 @@ Build in IntelliJ:
 
 * Move the manifest:
 
-.. note::
-
     Make sure your MANIFEST.MF is in:
         src/main/resources/META_INF/
     NOT
