@@ -1,15 +1,10 @@
 package com.internist.internist;
 
-import java.io.File;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.HashMap;
 import java.util.Map;
 import org.jsoup.Jsoup;
@@ -20,16 +15,16 @@ import org.jsoup.select.Elements;
 
 public class Internist {
     
-    final boolean DEBUG = false;
+    private final boolean DEBUG = false;
 
     /**
      * Return all possible URL segments following "http://internist.ru/publications/",
      * such as "kardiologiya/".
      */
-    List<String> getCategories() throws IOException {
+    private List<String> getCategories() throws IOException {
         Document publicationsPage = Jsoup.connect("http://internist.ru/publications/").get();
         Elements catLinks = publicationsPage.select("a[href~=/publications/(\\w+)/$]");
-        List<String> categories = new ArrayList();
+        List<String> categories = new ArrayList<>();
         catLinks.forEach((link) -> categories.add(link.attr("href")));
         return categories;
     }
@@ -41,11 +36,11 @@ public class Internist {
      * (3) or we are in january and we need (1) + the days 26+ of December last year.
      * Return the indices of filtered entries.
      */
-    List<Integer> getIndexesOfTheMonth(Elements dates) {
+    private List<Integer> getIndexesOfTheMonth(Elements dates) {
         final String[] months = {
             "января", "февраля", "марта", "апреля", "мая", "июня", 
             "июля", "августа", "сентября", "октября", "ноября", "декабря"};
-        Map monthsMap = new HashMap();
+        Map<String, Integer> monthsMap = new HashMap<>();
         for (int i=1; i <= months.length; i++) {
             monthsMap.put(months[i-1], i);
         }
@@ -57,12 +52,12 @@ public class Internist {
         String[] thisParts = dateTxt.split(" ");
         int thisMonth = Integer.parseInt(thisParts[1]);
         int thisYear = Integer.parseInt(thisParts[2]);
-        List<Integer> validIdx = new ArrayList();
+        List<Integer> validIdx = new ArrayList<>();
         for (int i=0; i < dates.size()-1; i++) {
             String date = dates.get(i).text();
             String[] parts = date.split(" ");
             int day = Integer.parseInt(parts[0]);
-            int month = (int) monthsMap.get(parts[1].toLowerCase());
+            int month = monthsMap.get(parts[1].toLowerCase());
             int year = Integer.parseInt(parts[2]);
             if (year == thisYear && month == thisMonth && day <= 25
              || year == thisYear && month == thisMonth-1 && day > 25
@@ -73,9 +68,8 @@ public class Internist {
         return validIdx;
     }
     
-    void parse() throws IOException {
+    private void parse() throws IOException {
         final String rootUrl = "http://internist.ru";
-
         List<String> categories = getCategories();
 
         for (String category : categories) {
@@ -109,7 +103,6 @@ public class Internist {
     }
     
     public static void main(String[] args) {
-                
         Internist in = new Internist();
         try {
             in.parse();
