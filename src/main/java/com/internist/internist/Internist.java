@@ -7,24 +7,30 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 
-public class Internist {
-    
-    private final boolean DEBUG = false;
+class Config {
+    final boolean SHOW_CATEGORY = true;
+    final boolean SHOW_DATE = false;
+}
+
+
+public class Internist extends Config {
 
     /**
      * Return all possible URL segments following "http://internist.ru/publications/",
      * such as "kardiologiya/".
      */
-    private List<String> getCategories() throws IOException {
+    private Set<String> getCategories() throws IOException {
         Document publicationsPage = Jsoup.connect("http://internist.ru/publications/").get();
-        Elements catLinks = publicationsPage.select("a[href~=/publications/(\\w+)/$]");
-        List<String> categories = new ArrayList<>();
+        Elements catLinks = publicationsPage.select("a[href~=/publications/([\\w-]+)/$]");
+        Set<String> categories = new HashSet<>();
         catLinks.forEach((link) -> categories.add(link.attr("href")));
         return categories;
     }
@@ -70,10 +76,10 @@ public class Internist {
     
     private void parse() throws IOException {
         final String rootUrl = "http://internist.ru";
-        List<String> categories = getCategories();
+        Set<String> categories = getCategories();
 
         for (String category : categories) {
-            if (DEBUG) {
+            if (SHOW_CATEGORY) {
                 System.out.println("-------------------------------------");
                 System.out.println("> "+ category);
                 System.out.println("-------------------------------------");
@@ -93,7 +99,7 @@ public class Internist {
                 Element link = links.get(i);
                 Element date = dates.get(i);
                 String description = link.text();
-                if (DEBUG) { System.out.println(date.text()) ;}
+                if (SHOW_DATE) { System.out.println(date.text()) ;}
                 System.out.println(description);
                 System.out.println(rootUrl + link.attr("href"));
                 System.out.println("");

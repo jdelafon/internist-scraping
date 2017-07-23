@@ -3,7 +3,7 @@ Build in IntelliJ:
 ------------------
 
 
-* Project Structure > Artifacts > JAR > From modules etc. > Select main class from dropdown + extract to target JAR > OK.
+* File > Project Structure > Artifacts > JAR > From modules etc. > Select main class from dropdown + extract to target JAR > OK.
 
 * Build > Build artifacts > Build
 
