@@ -16,10 +16,13 @@ Build in IntelliJ:
   Build > Build artifacts > Build
 
 * The executable is created in 
-    out > artifacts > [project]_jar > [project].jar
+    out > artifacts > internist_jar > internist.jar
 
 * Run it: 
-    java -jar [project].jar
+
+    ```bash
+    java -jar internist.jar
+    ```
 
 
 
