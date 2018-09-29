@@ -63,6 +63,7 @@ class InternistTest {
             "/publications/organizatsiya-zdravookhraneniya/",
             "/publications/psikhiatriya/",
             "/publications/nevrologiya/",
+            "/publications/travmatologiya/",
             "/publications/genetika/",
             "/publications/otolaringologiya/",
             "/publications/revmatologiya/",

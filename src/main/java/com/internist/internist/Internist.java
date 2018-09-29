@@ -20,7 +20,7 @@ import org.jsoup.select.Elements;
 class Global {
     final boolean SHOW_CATEGORY = true;
     final boolean SHOW_DATE = false;
-    final String ROOT_URL = "http://internist.ru";
+    final String ROOT_URL = "https://internist.ru";
 
     static String todayString() {
         final java.util.Date today = Calendar.getInstance().getTime();
@@ -84,15 +84,37 @@ class Publication extends Global {
 public class Internist extends Global {
 
     /**
-     * Return all possible URL segments following "http://internist.ru/publications/",
-     * such as "kardiologiya/".
+     * Connect to the pages containing the list of publications in a given category,
+     * and return the list of those we are interested in (last month's).
+     * @param category: the category name, such as "kardiologiya/".
+     * @param today: formatted string representing the current day.
+     * @param page: the number of the page, in string format (e.g. "1")
+     * @return a List of Publications
+     * @throws IOException: when the website cannot be found
      */
-    Set<String> getCategories() throws IOException {
-        Document publicationsPage = Jsoup.connect("http://internist.ru/publications/").get();
-        Elements catLinks = publicationsPage.select("a[href~=/publications/([\\w-]+)/$]");
-        Set<String> categories = new HashSet<>();
-        catLinks.forEach((link) -> categories.add(link.attr("href")));
-        return categories;
+    List<Publication> parseInternistWebsite(String category, int page, String today) throws IOException {
+        String url = ROOT_URL + category + "?PAGEN_1=" + Integer.toString(page);
+        Document site = Jsoup.connect(url).get();
+        Elements links = site.select("div.b-announcements__text h3 a");
+        Elements dates = site.select("div.b-announcements-info span");
+        List<String> datesText = dates.stream().map(Element::text).collect(Collectors.toList());
+
+        if (links.size() != dates.size()) {
+            System.err.println("Not the same number of links and dates");
+            System.exit(1);
+        }
+
+        List<Integer> validIdx = filterIndexesOfTheMonth(datesText, today);
+
+        List<Publication> pubs = new ArrayList<>();
+        for (int i : validIdx) {
+            Element link = links.get(i);
+            String date = datesText.get(i);
+            String description = link.text();
+            Publication pub = new Publication(date, description, link.attr("href"));
+            pubs.add(pub);
+        }
+        return pubs;
     }
 
     /**
@@ -117,30 +139,18 @@ public class Internist extends Global {
         return validIdx;
     }
 
-    List<Publication> parseInternistWebsite(String category, String today) throws IOException {
-        Document site = Jsoup.connect(ROOT_URL + category).get();
-        Elements links = site.select("div.b-announcements__text h3 a");
-        Elements dates = site.select("div.b-announcements-info span");
-        List<String> datesText = dates.stream().map(Element::text).collect(Collectors.toList());
-
-        if (links.size() != dates.size()) {
-            System.err.println("Not the same number of links and dates");
-            System.exit(1);
-        }
-
-        List<Integer> validIdx = filterIndexesOfTheMonth(datesText, today);
-
-        List<Publication> pubs = new ArrayList<>();
-        for (int i : validIdx) {
-            Element link = links.get(i);
-            String date = datesText.get(i);
-            String description = link.text();
-            Publication pub = new Publication(date, description, link.attr("href"));
-            pubs.add(pub);
-        }
-        return pubs;
+    /**
+     * Return all possible URL segments following "https://internist.ru/publications/",
+     * such as "kardiologiya/".
+     */
+    Set<String> getCategories() throws IOException {
+        Document publicationsPage = Jsoup.connect(ROOT_URL + "/publications/").get();
+        Elements catLinks = publicationsPage.select("a[href~=/publications/([\\w-]+)/$]");
+        Set<String> categories = new HashSet<>();
+        catLinks.forEach((link) -> categories.add(link.attr("href")));
+        return categories;
     }
-    
+
     public static void main(String[] args) throws IOException {
         Internist in = new Internist();
         final String today = todayString();
@@ -151,8 +161,18 @@ public class Internist extends Global {
                 System.out.println("> " + category);
                 System.out.println("-------------------------------------");
             }
-            List<Publication> pubs = in.parseInternistWebsite(category, today);
-            pubs.forEach(System.out::println);
+            List<Publication> publications = new ArrayList<>();
+            int page = 1;
+            while (page > 0) {
+                List<Publication> pubs = in.parseInternistWebsite(category, page, today);
+                if (pubs.size() > 0) {
+                    publications.addAll(pubs);
+                    page += 1;
+                } else {
+                    page = 0;
+                }
+            }
+            publications.forEach(System.out::println);
         }
     }
 }
